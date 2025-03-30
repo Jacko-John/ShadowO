@@ -1,4 +1,4 @@
-module test
+module ShadowO
 
 go 1.24.1
 

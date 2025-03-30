@@ -1,8 +1,8 @@
 package main
 
 import (
-	"test/client"
-	"test/server"
+	"ShadowO/client"
+	"ShadowO/server"
 	"time"
 )
 
