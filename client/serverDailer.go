@@ -38,7 +38,7 @@ func (c *Client) DialServer(id ClientID) (*net.Conn, error) {
 	}
 	// fmt.Println(conn)
 	if id == Master {
-		c.conn = &conn
+		c.mater = &conn
 	} else {
 		c.tunnel = &conn
 	}

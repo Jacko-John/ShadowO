@@ -16,7 +16,7 @@ type Client struct {
 	authSecret string
 	serverUrl  string
 	localUrl   string
-	conn       *net.Conn
+	mater      *net.Conn
 	tunnel     *net.Conn
 }
 

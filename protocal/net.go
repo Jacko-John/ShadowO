@@ -70,3 +70,72 @@ func NetConn(tcp *net.Conn, O *net.Conn) error {
 	}
 	return err[0]
 }
+
+func HeaderPing(conn *net.Conn) (Header, error) {
+	// TODO: implement ping
+	pingMsg := []byte{byte(Header_PING)}
+	_, err := (*conn).Write(pingMsg)
+	if err != nil {
+		return 0, err
+	}
+	buf := make([]byte, 1)
+	_, err = (*conn).Read(buf)
+	if err != nil {
+		return 0, err
+	}
+	if Header(buf[0]) != Header_PONG {
+		return Header(buf[0]), ErrPong
+	}
+	return Header(buf[0]), nil
+}
+
+func HeaderPong(conn *net.Conn) (Header, error) {
+	// TODO: implement pong
+	buf := make([]byte, 1)
+	_, err := (*conn).Read(buf)
+	if err != nil {
+		return 0, err
+	}
+	if Header(buf[0]) != Header_PING {
+		return Header(buf[0]), ErrPing
+	}
+	_, err = (*conn).Write([]byte{byte(Header_PONG)})
+	if err != nil {
+		return 0, err
+	}
+	return Header(buf[0]), nil
+}
+
+func HeaderNew(Conn *net.Conn) (Header, error) {
+	// TODO: implement new header
+	_, err := (*Conn).Write([]byte{byte(Header_NEW)})
+	if err != nil {
+		return 0, err
+	}
+	buf := make([]byte, 1)
+	_, err = (*Conn).Read(buf)
+	if err != nil {
+		return 0, err
+	}
+	if Header(buf[0]) != Header_GOT {
+		return Header(buf[0]), ErrGot
+	}
+	return Header(buf[0]), nil
+}
+
+func HeaderGot(Conn *net.Conn) (Header, error) {
+	// TODO: implement got header
+	buf := make([]byte, 1)
+	_, err := (*Conn).Read(buf)
+	if err != nil {
+		return 0, err
+	}
+	if Header(buf[0]) != Header_NEW {
+		return Header(buf[0]), ErrNew
+	}
+	_, err = (*Conn).Write([]byte{byte(Header_GOT)})
+	if err != nil {
+		return 0, err
+	}
+	return Header(buf[0]), nil
+}
