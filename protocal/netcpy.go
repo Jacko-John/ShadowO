@@ -6,13 +6,6 @@ import (
 )
 
 func netReadFromO(src io.Reader, dst io.Writer) (written int64, err error) {
-	// 优先使用高效的WriteTo/ReadFrom方法
-	if wt, ok := src.(io.WriterTo); ok {
-		return wt.WriteTo(dst)
-	}
-	if rf, ok := dst.(io.ReaderFrom); ok {
-		return rf.ReadFrom(src)
-	}
 
 	// 优化缓冲区大小
 	size := 32 * 1024
@@ -115,14 +108,6 @@ var bufPool = sync.Pool{
 }
 
 func netWriteToO(src io.Reader, dst io.Writer) (written int64, err error) {
-	// 优先使用高效方法
-	if wt, ok := src.(io.WriterTo); ok {
-		return wt.WriteTo(dst)
-	}
-	if rf, ok := dst.(io.ReaderFrom); ok {
-		return rf.ReadFrom(src)
-	}
-
 	// 从池中获取缓冲
 	buf := bufPool.Get().([]byte)
 	defer bufPool.Put(buf)
