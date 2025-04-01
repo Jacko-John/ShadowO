@@ -1,6 +1,7 @@
 package tunnel
 
 import (
+	"ShadowO/client/config"
 	"ShadowO/protocal"
 	"ShadowO/utils"
 	"crypto/tls"
@@ -20,6 +21,7 @@ type Tunnel struct {
 	signal     chan bool
 	localAddr  string
 	remoteAddr string
+	remotePort int32
 	isClosed   atomic.Bool // 原子标记是否已关闭
 	pool       *Pool
 	logger     *slog.Logger
@@ -129,7 +131,7 @@ func (t *Tunnel) ConnectLocal() error {
 
 func (t *Tunnel) ConnectRemote() error {
 	socket, _, err := gws.NewClient(&gws.BuiltinEventHandler{}, &gws.ClientOption{
-		TlsConfig:       &tls.Config{InsecureSkipVerify: true},
+		TlsConfig:       &tls.Config{InsecureSkipVerify: config.Get().SkipVerify},
 		Addr:            t.remoteAddr,
 		ParallelEnabled: true,
 	})
@@ -137,7 +139,7 @@ func (t *Tunnel) ConnectRemote() error {
 		return fmt.Errorf("failed to connect remote service: %w", err)
 	}
 	conn := socket.NetConn()
-	err = protocal.AuthC(&conn, t.pool.remoteAddr, protocal.ID_TUNNEL)
+	err = protocal.AuthC(&conn, t.pool.remoteAddr, t.remotePort, protocal.ID_TUNNEL)
 	if err != nil {
 		return err
 	}

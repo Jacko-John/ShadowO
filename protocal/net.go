@@ -7,12 +7,18 @@ import (
 	"net"
 )
 
-func AuthC(conn *net.Conn, secret string, id Identity) error {
+func AuthC(conn *net.Conn, secret string, port int32, id Identity) error {
 	// TODO: implement authentication
-	authMsg := []byte{byte(Header_AUTH)}
+	authMsg := make([]byte, 38)
+	authMsg[0] = byte(Header_AUTH)
 	secretHash := sha256.Sum256([]byte(secret))
-	authMsg = append(authMsg, secretHash[:]...)
-	authMsg = append(authMsg, byte(id))
+	copy(authMsg[1:33], secretHash[:])
+	portBytes := authMsg[33:37]
+	portBytes[0] = byte(port >> 24)
+	portBytes[1] = byte(port >> 16)
+	portBytes[2] = byte(port >> 8)
+	portBytes[3] = byte(port)
+	authMsg[37] = byte(id)
 	_, err := (*conn).Write(authMsg)
 	if err != nil {
 		return err
@@ -28,27 +34,28 @@ func AuthC(conn *net.Conn, secret string, id Identity) error {
 	return nil
 }
 
-func AuthS(conn *net.Conn, secret string) (Identity, error) {
+func AuthS(conn *net.Conn, secret string) (int32, Identity, error) {
 	// TODO: implement authentication
-	buf := make([]byte, 34)
+	buf := make([]byte, 38)
 	_, err := (*conn).Read(buf)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 	if buf[0] != byte(Header_AUTH) {
-		return 0, ErrAuthHeader
+		return 0, 0, ErrAuthHeader
 	}
 	secretHash := sha256.Sum256([]byte(secret))
 	if !bytes.Equal(secretHash[:], buf[1:33]) {
-		return 0, ErrAuthFailed
+		return 0, 0, ErrAuthFailed
 	}
-	id := Identity(buf[33])
+	port := int32(buf[33])<<24 | int32(buf[34])<<16 | int32(buf[35])<<8 | int32(buf[36])
+	id := Identity(buf[37])
 	authMsg := []byte{byte(Header_AUTH_R)}
 	_, err = (*conn).Write(authMsg)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-	return id, nil
+	return port, id, nil
 }
 
 func NetConn(tcp *net.Conn, O *net.Conn) error {

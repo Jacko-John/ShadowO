@@ -4,6 +4,7 @@ import (
 	"ShadowO/utils"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"sync/atomic"
 	"time"
 )
@@ -20,6 +21,7 @@ type Pool struct {
 	name       string
 	remoteAddr string
 	loaclAddr  string
+	remotePort string
 	idleConns  *utils.SafeMap[string, *Tunnel]
 	closed     atomic.Bool
 	logger     *slog.Logger
@@ -38,11 +40,12 @@ type Pool struct {
 
 // var logger = slog.Default()
 
-func NewPool(name, remoteAddr, localAddr string, logger *slog.Logger) *Pool {
+func NewPool(name, remoteAddr, remotePort, localAddr string, logger *slog.Logger) *Pool {
 	p := &Pool{
 		name:       name,
 		remoteAddr: remoteAddr,
 		loaclAddr:  localAddr,
+		remotePort: remotePort,
 		idleConns:  utils.NewSafeMap[string, *Tunnel](),
 		logger:     logger,
 	}
@@ -62,20 +65,28 @@ func NewPool(name, remoteAddr, localAddr string, logger *slog.Logger) *Pool {
 	return p
 }
 
-func (p *Pool) createTunnel() *Tunnel {
+func (p *Pool) createTunnel() (*Tunnel, error) {
+	rport, err := strconv.Atoi(p.remotePort)
+	if err != nil {
+		return nil, err
+	}
 	t := &Tunnel{
 		signal:     make(chan bool, 1),
 		localAddr:  p.loaclAddr,
 		remoteAddr: p.remoteAddr,
+		remotePort: int32(rport),
 		pool:       p,
 		logger:     p.logger,
 	}
-	return t
+	return t, nil
 }
 
 func (p *Pool) createAndStartNewTunnel() (*Tunnel, error) {
-	t := p.createTunnel()
-	if err := t.ConnectRemote(); err != nil {
+	t, err := p.createTunnel()
+	if err != nil {
+		return nil, err
+	}
+	if err = t.ConnectRemote(); err != nil {
 		return nil, err
 	}
 	go t.Do()
@@ -143,11 +154,13 @@ func (p *Pool) GetTunnelByLocalAddr(localAddr string) *Tunnel {
 }
 
 func (p *Pool) Close() {
-	p.closed.Store(true)
-	p.idleConns.Range(func(key string, value *Tunnel) bool {
-		value.Close()
-		return true
-	})
+	if p.closed.CompareAndSwap(false, true) {
+		p.idleConns.Range(func(key string, value *Tunnel) bool {
+			value.Close()
+			return true
+		})
+		p = nil
+	}
 }
 
 // 其他方法保持原有优化...

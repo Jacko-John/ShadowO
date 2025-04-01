@@ -1,0 +1,10 @@
+remote-addr: 127.0.0.1:8080
+secret: sadjalsjdksa
+skip-cert-verify: true
+mappings:
+  - name: example.com
+    remote-port: 80
+    local-addr: 127.0.0.1:8080
+  - name: example.com1
+    remote-port: 81
+    local-addr: 127.0.0.1:8081

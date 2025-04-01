@@ -1,6 +1,6 @@
 package main
 
-import "fmt"
+import "ShadowO/client"
 
 func main() {
 	// s := server.NewServer("secret")
@@ -10,9 +10,10 @@ func main() {
 	// c := client.NewClient("secret", "wss://localhost:8081/tunnel", "localhost:80")
 	// c.Run()
 
-	for range 10 {
-		fmt.Println("Hello, world!")
-	}
+	// for range 10 {
+	// 	fmt.Println("Hello, world!")
+	// }
+	client.Run()
 }
 
 // The client code is not included in this version.
