@@ -53,6 +53,7 @@ func AuthS(conn *net.Conn, secret string) (Identity, error) {
 
 func NetConn(tcp *net.Conn, O *net.Conn) error {
 	// TODO: implement net copy
+	defer (*tcp).Close()
 	var err [2]error
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

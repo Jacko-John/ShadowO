@@ -1,51 +1,27 @@
 package client
 
 import (
-	"log"
-	"net"
-)
-
-type ClientID byte
-
-const (
-	Master ClientID = ClientID(0)
-	Tunnel ClientID = ClientID(1)
+	"ShadowO/client/config"
+	"ShadowO/client/tunnel"
+	"flag"
+	"log/slog"
 )
 
 type Client struct {
-	authSecret string
-	serverUrl  string
-	localUrl   string
-	mater      *net.Conn
-	tunnel     *net.Conn
-}
-
-func NewClient(authSecret, serverUrl, localUrl string) *Client {
-	return &Client{
-		authSecret: authSecret,
-		serverUrl:  serverUrl,
-		localUrl:   localUrl,
-	}
+	// authSecret string
+	// serverUrl  string
+	// localUrl   string
 }
 
 func (c *Client) Run() {
-
-	conn, err := c.DialServer(Tunnel)
-	if err != nil {
-		log.Println(err)
-		return
+	confPath := flag.String("c", "config.yaml", "path to config file")
+	flag.Parse()
+	config.Init(*confPath)
+	cfg := config.Get()
+	pools := make([]*tunnel.Pool, len(cfg.Mappings))
+	for i, mapping := range cfg.Mappings {
+		rmaddr := cfg.RemoteAddr + ":" + mapping.RemotePort
+		pools[i] = tunnel.NewPool(mapping.Name, rmaddr, mapping.LocalAddr, slog.Default())
 	}
-	// conn := *(c.tunnel)
-	// log.Println("Connected to server")
-	// log.Println(conn)
-	for {
-		buf := make([]byte, len("new"))
-		(*conn).Read(buf)
-		log.Println(string(buf))
-		if string(buf) != "new" {
-			continue
-		}
-		(*conn).Write([]byte("Ok..."))
-		c.DialLocal()
-	}
+	select {}
 }
