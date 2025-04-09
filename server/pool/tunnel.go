@@ -71,16 +71,20 @@ func (t *Tunnel) readLoop() {
 	header := make([]byte, 1)
 	ticket := t.mu.GetTicket()
 	for {
+		fmt.Printf("try to lock %d\n", ticket)
 		t.mu.Lock(ticket)
+		fmt.Printf("locked %d\n", ticket)
 		_, err := t.conn.Read(header)
 		if err != nil {
-			if err == protocal.ErrEOF {
-				continue
-			}
 			t.logger.Error(fmt.Sprintf("Failed to read header: %v", err))
 			t.Close()
 			t.mu.Unlock()
 			return
+		}
+		if header[0] == byte(protocal.Header_EOF) {
+			ticket = t.mu.GetTicket()
+			t.mu.Unlock()
+			continue
 		}
 		if header[0] == byte(protocal.Header_GOT) {
 			ticket = t.mu.GetSkipTicket(1)
@@ -94,7 +98,9 @@ func (t *Tunnel) readLoop() {
 
 func (t *Tunnel) handleNewRequest(tcp *net.Conn) bool {
 	ticket := t.mu.GetTicket()
+	fmt.Printf("try to lock %d\n", ticket)
 	t.mu.Lock(ticket)
+	fmt.Printf("locked %d\n", ticket)
 	defer func() {
 		t.mu.Unlock()
 		t.pool.Put(t)

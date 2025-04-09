@@ -1,7 +1,9 @@
 package protocal
 
 import (
+	"fmt"
 	"io"
+	"log"
 	"sync"
 )
 
@@ -34,6 +36,13 @@ func netReadFromO(src io.Reader, dst io.Writer) (written int64, err error) {
 		for len(readBuf) > 0 {
 			if !headerParsed {
 				if err = parseHeader(&readBuf, &contentLen); err != nil {
+					if err == ErrEOF {
+						if len(readBuf) > 0 {
+							fmt.Println("sticky package")
+						}
+						fmt.Println("EOF reached")
+						return written, nil
+					}
 					return written, err
 				}
 				if contentLen == 0 {
@@ -50,6 +59,9 @@ func netReadFromO(src io.Reader, dst io.Writer) (written int64, err error) {
 			}
 			written += int64(nw)
 			if ew != nil {
+				if ew == io.EOF {
+					return written, nil
+				}
 				return written, ew
 			}
 
@@ -149,7 +161,7 @@ func netWriteToO(src io.Reader, dst io.Writer) (written int64, err error) {
 			if er != io.EOF {
 				return written, er
 			}
-
+			log.Printf("EOF reached")
 			// 发送EOF标记
 			writeHeader(headerBuf, Header_EOF, 0)
 			if _, err = dst.Write(headerBuf[:1]); err != nil {

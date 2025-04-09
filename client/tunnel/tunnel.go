@@ -129,9 +129,6 @@ func (t *Tunnel) ConnectLocal() error {
 	}
 	err = protocal.NetConn(&tcp, &t.conn)
 	if err != nil {
-		if err == protocal.ErrEOF {
-			return nil
-		}
 		return err
 	}
 	return nil

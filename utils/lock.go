@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 )
@@ -85,6 +86,7 @@ func (tl *TicketLock) Lock(ticket int32) {
 func (tl *TicketLock) Unlock() {
 	// tl.mu1.Lock()
 	// defer tl.mu1.Unlock()
+	fmt.Println("Unlock")
 	tl.current.Add(1)
 	// 通知所有等待者检查当前票号
 	tl.cond.Broadcast()

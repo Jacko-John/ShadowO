@@ -1,11 +1,11 @@
 package main
 
-import "ShadowO/client"
+import "ShadowO/server"
 
 func main() {
-	// s := server.NewServer()
-	// s.Run()
-	client.Run()
+	s := server.NewServer()
+	s.Run()
+	// client.Run()
 	// config1.Init("s.yaml")
 	// config.Init("c.yaml")
 	// c1 := config1.Get()
