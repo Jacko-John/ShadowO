@@ -2,51 +2,38 @@
 package server
 
 import (
-	"log"
-	"net"
+	"ShadowO/server/config"
+	"ShadowO/server/pool"
+	"flag"
+	"log/slog"
 	"net/http"
-	"sync"
 )
 
 type Server struct {
-	pool       *ConnectionPool
-	authSecret string
+	pools      map[string]*pool.Pool
 	httpServer *http.Server
-	mu         sync.Mutex
+	logger     *slog.Logger
 }
 
-func NewServer(authSecret string) *Server {
-	pool := &ConnectionPool{
-		conns: make(map[string]*AuthConn),
-	}
+func NewServer() *Server {
+	pool := make(map[string]*pool.Pool)
 	return &Server{
-		pool:       pool,
-		authSecret: authSecret,
+		pools:  pool,
+		logger: slog.Default(),
 	}
 }
-
-func (s *Server) Listen() error {
+func (s *Server) Run() error {
+	confPath := flag.String("c", "config.yaml", "path to config file")
+	flag.Parse()
+	config.Init(*confPath)
 	mux := http.NewServeMux()
-	mux.HandleFunc("/tunnel", s.wsHandler)
-	s.httpServer = &http.Server{
-		Addr:    ":8081",
+	mux.HandleFunc("/", s.wsHandler)
+	cfg := config.Get()
+	s.logger.Info("listen on " + cfg.ListenAddr)
+	s.logger.Info(cfg.String())
+	httpServer := &http.Server{
+		Addr:    cfg.ListenAddr,
 		Handler: mux,
 	}
-	return s.httpServer.ListenAndServeTLS("cert.pem", "key.pem")
-	// handle request
-}
-
-func (s *Server) ServeContent() error {
-	tcpConn, err := net.Listen("tcp", ":8080")
-	if err != nil {
-		return err
-	}
-	for {
-		conn, err := tcpConn.Accept()
-		if err != nil {
-			return err
-		}
-		log.Println("new connection from", conn.RemoteAddr())
-		s.connectWebsocket(conn)
-	}
+	return httpServer.ListenAndServeTLS(cfg.CertFile.Cert, cfg.CertFile.Key)
 }

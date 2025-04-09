@@ -73,7 +73,12 @@ func (t *Tunnel) handleNewRequest() bool {
 		t.signal <- true
 		t.mu.Lock()
 	}
-	defer t.mu.Unlock()
+	defer func() {
+		t.mu.Unlock()
+		t.pool.PutTunnel(t)
+	}()
+	_ = t.pool.GetTunnelByLocalAddr(t.conn.LocalAddr().String())
+	t.logger.Info(fmt.Sprintf("New link %s <- %d", t.remoteAddr, t.remotePort))
 	if _, err := t.conn.Write([]byte{byte(protocal.Header_GOT)}); err != nil {
 		t.logger.Error(fmt.Sprintf("Failed to send GOT header: %v", err))
 		return false
@@ -124,6 +129,9 @@ func (t *Tunnel) ConnectLocal() error {
 	}
 	err = protocal.NetConn(&tcp, &t.conn)
 	if err != nil {
+		if err == protocal.ErrEOF {
+			return nil
+		}
 		return err
 	}
 	return nil
@@ -139,7 +147,8 @@ func (t *Tunnel) ConnectRemote() error {
 		return fmt.Errorf("failed to connect remote service: %w", err)
 	}
 	conn := socket.NetConn()
-	err = protocal.AuthC(&conn, t.pool.remoteAddr, t.remotePort, protocal.ID_TUNNEL)
+	cfg := config.Get()
+	err = protocal.AuthC(&conn, cfg.Secret, t.remotePort, protocal.ID_TUNNEL)
 	if err != nil {
 		return err
 	}

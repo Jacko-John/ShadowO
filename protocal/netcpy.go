@@ -94,7 +94,7 @@ func parseHeader(buf *[]byte, contentLen *int) error {
 
 	case byte(Header_EOF):
 		*buf = (*buf)[1:] // 消耗EOF字节
-		return io.EOF
+		return ErrEOF
 
 	default:
 		return ErrInvalidRead

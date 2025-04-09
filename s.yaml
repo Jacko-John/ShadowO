@@ -1,0 +1,5 @@
+listen-addr: 0.0.0.0:8080
+secret: sadjalsjdksa
+cert-file:
+  key: /home/jacko/FILES/ShadowO/cert/key.pem
+  cert: /home/jacko/FILES/ShadowO/cert/cert.pem

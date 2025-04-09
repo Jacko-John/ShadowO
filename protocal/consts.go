@@ -31,4 +31,5 @@ var (
 	ErrPing         = errors.New("ping error")
 	ErrNew          = errors.New("new error")
 	ErrGot          = errors.New("got error")
+	ErrEOF          = errors.New("eof error")
 )

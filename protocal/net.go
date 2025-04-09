@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"fmt"
 	"net"
 )
 
@@ -46,6 +47,8 @@ func AuthS(conn *net.Conn, secret string) (int32, Identity, error) {
 	}
 	secretHash := sha256.Sum256([]byte(secret))
 	if !bytes.Equal(secretHash[:], buf[1:33]) {
+		fmt.Printf("c: %x\n", buf[1:33])
+		fmt.Printf("s: %x\n", secretHash[:])
 		return 0, 0, ErrAuthFailed
 	}
 	port := int32(buf[33])<<24 | int32(buf[34])<<16 | int32(buf[35])<<8 | int32(buf[36])

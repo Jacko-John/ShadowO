@@ -51,7 +51,7 @@ func NewPool(name, remoteAddr, remotePort, localAddr string, logger *slog.Logger
 	}
 
 	// 初始化最小连接数
-	for range MaxIdleConnections {
+	for range MinIdleConnections {
 		t, err := p.createAndStartNewTunnel()
 		if err != nil {
 			p.logger.Error(fmt.Sprintf("%s :create tunnel failed, %v", p.name, err))

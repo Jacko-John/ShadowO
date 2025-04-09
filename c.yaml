@@ -1,0 +1,7 @@
+remote-addr: wss://127.0.0.1:8080
+secret: sadjalsjdksa
+skip-cert-verify: true
+mappings:
+  - name: example.com
+    remote-port: 8081
+    local-addr: 127.0.0.1:80
